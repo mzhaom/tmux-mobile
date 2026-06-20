@@ -395,7 +395,10 @@ function pinOverlayHtml(managePin) {
 // fetch, ES modules, localStorage) still won't fully work — hence the banner with
 // an "Open raw" / "Download" escape hatch. The raw endpoint serves HTML under a
 // `Content-Security-Policy: sandbox` so even that top-level tab stays opaque.
-function renderArtifactViewerPage(name, kind, rawUrl) {
+// `managePin` (optional) is the manage descriptor from servePin — when the
+// wrapper is serving an already-pinned artifact, the overlay shows the owner's
+// share/unpin controls instead of the create-a-pin button.
+function renderArtifactViewerPage(name, kind, rawUrl, managePin) {
   const title = escapeHtmlShared(sanitizeFilename(name));
   const safeRaw = escapeHtmlShared(rawUrl);
   const dlUrl = `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}dl=1`;
@@ -414,7 +417,7 @@ function renderArtifactViewerPage(name, kind, rawUrl) {
 </style>
 </head><body>
 <img src="${safeRaw}" alt="${title}" />
-${pinOverlayHtml()}
+${pinOverlayHtml(managePin)}
 </body></html>`;
   }
   // HTML artifact: sandboxed iframe (opaque origin) + a banner escape hatch.
@@ -445,7 +448,7 @@ ${pinOverlayHtml()}
   <a href="${safeDl}">Download</a>
 </div>
 <iframe src="${safeRaw}" sandbox="allow-scripts allow-popups allow-forms" title="${title}"></iframe>
-${pinOverlayHtml()}
+${pinOverlayHtml(managePin)}
 </body></html>`;
 }
 
@@ -4729,6 +4732,7 @@ if (MODE.kind === "register") {
           dl: url.searchParams.get("dl") === "1",
           raw: url.searchParams.get("raw") === "1",
           renderMarkdown: renderMarkdownPage,
+          renderViewer: renderArtifactViewerPage,
         });
         if (result.status === 302) {
           sendRedirect(res, result.redirect);
